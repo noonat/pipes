@@ -1,0 +1,3 @@
+[submodule "vendor/pecs"]
+	path = vendor/pecs
+	url = git://github.com/noonat/pecs.git
