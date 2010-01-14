@@ -3,17 +3,18 @@
 namespace pipes;
 
 /// Find the matching route and invoke its function
-function run($opts=array()) {
-    $opts = new Hash($opts);
+function run($options=array()) {
+    $options = options()->merge($options);
     $request = request();
     $response = response();
     foreach (routes() as $route) {
         if ($route->matches($request, $matches)) {
+            route($route);
             $path = isset($matches['path']) ? $matches['path'] : $request->path;
             $data = $route->run($path, $matches);
             if ($data)
                 $response->write($data);
-            if ($opts->get('flush', true))
+            if ($options->get('flush', true))
                 $response->flush();
             return $route;
         }
@@ -21,64 +22,12 @@ function run($opts=array()) {
     return null;
 }
 
-/// Return the current Request object
-function request($newRequest=null) {
-    static $request;
-    if (!isset($request) || isset($newRequest))
-        $request = $newRequest ?: new Request();
-    return $request;
-}
-
-
-/// Return the current Response object
-function response($newResponse=null) {
-    static $response;
-    if (!isset($response) || isset($newResponse))
-        $response = $newResponse ?: new Response();
-    return $response;
-}
-
-/// Return the array of defined routes
-function &routes($newRoutes=null) {
-    static $routes = array();
-    if (isset($newRoutes))
-        $routes = $newRoutes;
-    return $routes;
-}
-
-/// Define a new route
-function route($pattern, $opts) {
-    $route = new Route($pattern, $opts);
-    array_push(routes(), $route);
-    return $route;
-}
-
-/// Define a new route, limited to the DELETE HTTP method.
-function delete($pattern, $opts) {
-    $route = route($pattern, $opts);
-    $route->opts->method = 'DELETE';
-    return $route;
-}
-
-/// Define a new route, limited to the GET HTTP method.
-function get($pattern, $opts) {
-    $route = route($pattern, $opts);
-    $route->opts->method = 'GET';
-    return $route;
-}
-
-/// Define a new route, limited to the POST HTTP method.
-function post($pattern, $opts) {
-    $route = route($pattern, $opts);
-    $route->opts->method = 'POST';
-    return $route;
-}
-
-/// Define a new route, limited to the PUT HTTP method.
-function put($pattern, $opts) {
-    $route = route($pattern, $opts);
-    $route->opts->method = 'PUT';
-    return $route;
+/// Return the current options hash
+function options($newOptions=null) {
+    static $options;
+    if (!isset($options) || isset($newOptions))
+        $options = $newOptions ?: new Hash();
+    return $options;
 }
 
 /// Include a PHP file if it exists. Values in $context will be extracted
@@ -91,6 +40,90 @@ function php($filename, $context=array()) {
     }
     else
         return false;
+}
+
+/// Like php(), but assumes path is relative to the views folder, and
+/// returns the output as a string. Returns false if no file was found.
+function render($template, $locals=array()) {
+    $context = new Hash(array(
+        'response' => response(),
+        'request' => request(),
+        'route' => route(),
+    ));
+    $context->merge($locals);
+    $views = options()->get('views', './views');
+    $filename = realpath("{$views}/{$template}");
+    ob_start();
+    $included = php($filename, $context);
+    $output = ob_get_clean();
+    return $included ? $output : false;
+}
+
+/// Return the current Request object
+function request($newRequest=null) {
+    static $request;
+    if (!isset($request) || isset($newRequest))
+        $request = $newRequest ?: new Request();
+    return $request;
+}
+
+/// Return the current Response object
+function response($newResponse=null) {
+    static $response;
+    if (!isset($response) || isset($newResponse))
+        $response = $newResponse ?: new Response();
+    return $response;
+}
+
+/// Return the route that matches the current request
+function route($newRoute=null) {
+    static $route;
+    if (isset($newRoute))
+        $route = $newRoute;
+    return $route;
+}
+
+/// Return the array of defined routes
+function &routes($newRoutes=null) {
+    static $routes = array();
+    if (isset($newRoutes))
+        $routes = $newRoutes;
+    return $routes;
+}
+
+/// Define a new route for any HTTP method
+function any($pattern, $options) {
+    $route = new Route($pattern, $options);
+    array_push(routes(), $route);
+    return $route;
+}
+
+/// Define a new route, limited to the DELETE HTTP method.
+function delete($pattern, $options) {
+    $route = any($pattern, $options);
+    $route->options->method = 'DELETE';
+    return $route;
+}
+
+/// Define a new route, limited to the GET HTTP method.
+function get($pattern, $options) {
+    $route = any($pattern, $options);
+    $route->options->method = 'GET';
+    return $route;
+}
+
+/// Define a new route, limited to the POST HTTP method.
+function post($pattern, $options) {
+    $route = any($pattern, $options);
+    $route->options->method = 'POST';
+    return $route;
+}
+
+/// Define a new route, limited to the PUT HTTP method.
+function put($pattern, $options) {
+    $route = any($pattern, $options);
+    $route->options->method = 'PUT';
+    return $route;
 }
 
 /// Wraps the HTTP request information (URI, method, params).
@@ -148,16 +181,16 @@ class Response {
 
 /// Describes an individual route handler.
 class Route {
-    function __construct($pattern, $opts) {
+    function __construct($pattern, $options) {
         $this->pattern = null;
         $this->rawPattern = $pattern;
-        $this->opts = new Hash();
-        if (is_callable($opts) && is_object($opts))
-            $opts = array('callback'=>$opts);
-        $this->opts->merge($opts);
-        $this->opts->paths = (array)$this->opts->get('paths', $this->opts->path);
-        $this->opts->delete('path');
-        if (empty($this->opts->paths) && empty($this->opts->callback))
+        $this->options = new Hash();
+        if (is_callable($options) && is_object($options))
+            $options = array('callback'=>$options);
+        $this->options->merge($options);
+        $this->options->paths = (array)$this->options->get('paths', $this->options->path);
+        $this->options->delete('path');
+        if (empty($this->options->paths) && empty($this->options->callback))
             throw new \Exception('paths or callback required for route');
     }
     
@@ -170,7 +203,7 @@ class Route {
     
     /// Returns true if this route matches the given request.
     function matches($request, &$matches=null) {
-        if ($this->opts->method && $request->method !== $this->opts->method)
+        if ($this->options->method && $request->method !== $this->options->method)
             return false;
         if (is_null($this->pattern))
             $this->compile();
@@ -189,16 +222,16 @@ class Route {
             }
         }
         $request->params->captures = array_slice($matches, 1);
-        if ($this->opts->callback)
+        if ($this->options->callback)
             return $this->runCallback(array($request->params));
-        else if ($this->opts->paths)
+        else if ($this->options->paths)
             return $this->runPaths($path);
         else
             throw new \Exception('paths or callback required for route');
     }
     
     function runCallback($args) {
-        return call_user_func_array($this->opts->callback, $args);
+        return call_user_func_array($this->options->callback, $args);
     }
     
     /// Iterates over the paths supplied in the route options and includes any
@@ -211,8 +244,8 @@ class Route {
             'route' => $this
         ));
         $included = false;
-        $this->bubble = $this->opts->get('bubble', true);
-        foreach ($this->opts->paths as $path) {
+        $this->bubble = $this->options->get('bubble', true);
+        foreach ($this->options->paths as $path) {
             $filename = "{$path}/{$tail}.php";
             $filename = realpath($filename);
             if (!$filename) {
@@ -253,6 +286,7 @@ class Hash extends \ArrayObject {
     function merge($values) {
         foreach ($values as $key => $value)
             $this[$key] = $value;
+        return $this;
     }
 
     function offsetGet($key) {

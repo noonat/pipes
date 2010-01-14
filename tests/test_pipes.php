@@ -9,6 +9,7 @@ describe("run", function() {
         $_REQUEST['a'] = 1;
         $_REQUEST['b'] = 2;
         pipes\routes(array());
+        $options = pipes\options(new pipes\Hash());
         $request = pipes\request(new pipes\Request());
         $response = pipes\response(new pipes\Response());
         return array_merge($context, compact('oldServer', 'oldRequest', 'request'));
@@ -37,7 +38,7 @@ describe("run", function() {
         expect(ob_get_clean())->to_be('');
     });
     
-    it("should not flush the response if \$opts->flush is false", function() {
+    it("should not flush the response if \$options->flush is false", function() {
         pipes\get('/foo', function() {
             return 'bar';
         });
@@ -82,5 +83,20 @@ describe("php", function() {
         $filename = __DIR__.'/mock/path1/context.php';
         expect(pipes\php($filename, $context))->to_be_true();
         expect(ob_get_clean())->to_be("int(1337)\n");
+    });
+});
+
+describe("render", function() {
+    it("should run a file relative to the templates folder and return output", function() {
+        pipes\options()->views = __DIR__.'/views';
+        ob_start();
+        expect(pipes\render('foo.php'))->to_be('hello');
+        expect(ob_get_clean())->to_be('');
+    });
+    
+    it("should return false if the file does not exist", function() {
+        ob_start();
+        expect(pipes\render('bar.php'))->to_be_false();
+        expect(ob_get_clean())->to_be('');
     });
 });

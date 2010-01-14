@@ -24,19 +24,19 @@ describe("routes()", function() {
     });
 });
 
-describe("route()", function() {
+describe("any()", function() {
     before_each(function() {
         pipes\routes(array());
     });
     
     it("should create a new Route object and return it", function() {
-        $route = pipes\route('/foo/bar', function() {}); 
+        $route = pipes\any('/foo/bar', function() {}); 
         expect($route)->to_be_a('pipes\Route');
     });
     
     it("should add the new route to the list of routes", function() {
         expect(pipes\routes())->to_be_empty();
-        $route = pipes\route('/foo/bar', function() {});
+        $route = pipes\any('/foo/bar', function() {});
         expect(pipes\routes())->to_have_count(1);
         expect(pipes\routes())->to_be(array($route));
     });
@@ -47,7 +47,7 @@ describe("delete()", function() {
         pipes\routes(array());
         $route = pipes\delete('/foo/bar', function() {}); 
         expect($route)->to_be_a('pipes\Route');
-        expect($route->opts->method)->to_be('DELETE');
+        expect($route->options->method)->to_be('DELETE');
     });
 });
 
@@ -56,7 +56,7 @@ describe("get()", function() {
         pipes\routes(array());
         $route = pipes\get('/foo/bar', function() {}); 
         expect($route)->to_be_a('pipes\Route');
-        expect($route->opts->method)->to_be('GET');
+        expect($route->options->method)->to_be('GET');
         expect(pipes\routes())->to_be(array($route));
     });
 });
@@ -66,7 +66,7 @@ describe("post()", function() {
         pipes\routes(array());
         $route = pipes\post('/foo/bar', function() {}); 
         expect($route)->to_be_a('pipes\Route');
-        expect($route->opts->method)->to_be('POST');
+        expect($route->options->method)->to_be('POST');
         expect(pipes\routes())->to_be(array($route));
     });
 });
@@ -76,7 +76,7 @@ describe("put()", function() {
         pipes\routes(array());
         $route = pipes\put('/foo/bar', function() {}); 
         expect($route)->to_be_a('pipes\Route');
-        expect($route->opts->method)->to_be('PUT');
+        expect($route->options->method)->to_be('PUT');
         expect(pipes\routes())->to_be(array($route));
     });
 });
@@ -96,37 +96,37 @@ describe("Route", function() {
         $callback = function(){};
         
         // try with an array
-        $opts = array('foo'=>'bar', 'callback'=>$callback);
-        $route = new pipes\Route('/foo/:bar', $opts);
-        expect($route->opts)->to_be_a('pipes\Hash');
-        expect($route->opts)->to_have_count(3);
-        expect($route->opts->foo)->to_be('bar');
-        expect($route->opts->paths)->to_be(array());
-        expect($route->opts->callback)->to_be($callback);
+        $options = array('foo'=>'bar', 'callback'=>$callback);
+        $route = new pipes\Route('/foo/:bar', $options);
+        expect($route->options)->to_be_a('pipes\Hash');
+        expect($route->options)->to_have_count(3);
+        expect($route->options->foo)->to_be('bar');
+        expect($route->options->paths)->to_be(array());
+        expect($route->options->callback)->to_be($callback);
         
         // try it again with a hash
-        $opts = new pipes\Hash(array('foo'=>'bar', 'callback'=>$callback));
-        $route = new pipes\Route('/foo/:bar', $opts);
-        expect($route->opts)->to_be_a('pipes\Hash');
-        expect($route->opts)->to_have_count(3);
-        expect($route->opts->foo)->to_be('bar');
-        expect($route->opts->paths)->to_be(array());
-        expect($route->opts->callback)->to_be($callback);
+        $options = new pipes\Hash(array('foo'=>'bar', 'callback'=>$callback));
+        $route = new pipes\Route('/foo/:bar', $options);
+        expect($route->options)->to_be_a('pipes\Hash');
+        expect($route->options)->to_have_count(3);
+        expect($route->options->foo)->to_be('bar');
+        expect($route->options->paths)->to_be(array());
+        expect($route->options->callback)->to_be($callback);
     });
     
     it("should accept a callback instead of options as the second parameter", function() {
         $callback = function(){};
         $route = new pipes\Route('/foo/:bar', $callback);
-        expect($route->opts->callback)->to_be($callback);
+        expect($route->options->callback)->to_be($callback);
     });
     
     it("should allow the paths option to be a string or array", function() {
         $route = new pipes\Route('/foo/:bar', array('path'=>'xyzzy'));
-        expect($route->opts->paths)->to_be(array('xyzzy'));
+        expect($route->options->paths)->to_be(array('xyzzy'));
         $route = new pipes\Route('/foo/:bar', array('paths'=>array('xyzzy')));
-        expect($route->opts->paths)->to_be(array('xyzzy'));
+        expect($route->options->paths)->to_be(array('xyzzy'));
         $route = new pipes\Route('/foo/:bar', array('paths'=>array('xyzzy', 'biff')));
-        expect($route->opts->paths)->to_be(array('xyzzy', 'biff'));
+        expect($route->options->paths)->to_be(array('xyzzy', 'biff'));
     });
     
     it("should require a callback or paths option", function() {
@@ -229,7 +229,7 @@ describe("Route", function() {
         
         it("should fail if neither callback or paths are set", function() {
             $route = new pipes\Route('/', function(){});
-            unset($route->opts->callback);
+            unset($route->options->callback);
             expect(function() use($route) {
                 $route->run('/', array());
             })->to_throw('Exception', 'paths or callback required for route');
