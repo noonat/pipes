@@ -81,9 +81,9 @@ function put($pattern, $opts) {
     return $route;
 }
 
-/// Include a file if it exists. Values in $context will be extracted
+/// Include a PHP file if it exists. Values in $context will be extracted
 /// into the file's local context, if specified.
-function includeIfExists($filename, $context=array()) {
+function php($filename, $context=array()) {
     if (file_exists($filename)) {
         extract($context instanceof Hash ? $context->toArray() : $context);
         include $filename;
@@ -221,7 +221,7 @@ class Route {
             if (strncmp($filename, $path, strlen($path)) !== 0)
                 throw new \Exception("route tried to access unsafe path");
             ob_start();
-            if (includeIfExists($filename, $context))
+            if (php($filename, $context))
                 $included = true;
             $buffer .= ob_get_clean();
             if (!$this->bubble)

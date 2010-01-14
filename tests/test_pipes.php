@@ -61,18 +61,18 @@ describe("run", function() {
     });
 });
 
-describe("includeIfExists", function() {
+describe("php", function() {
     it("should return true if the file was included", function() {
         ob_start();
         $filename = __DIR__.'/mock/path1/foo.php';
-        expect(pipes\includeIfExists($filename))->to_be_true();
+        expect(pipes\php($filename))->to_be_true();
         expect(ob_get_clean())->to_be('foo1');
     });
     
     it("should return false if the file was not included", function() {
         ob_start();
         $filename = __DIR__.'/does/not/exist.php';
-        expect(pipes\includeIfExists($filename))->to_be_false();
+        expect(pipes\php($filename))->to_be_false();
         expect(ob_get_clean())->to_be('');
     });
     
@@ -80,7 +80,7 @@ describe("includeIfExists", function() {
         ob_start();
         $context = array('xyzzy' => 1337);
         $filename = __DIR__.'/mock/path1/context.php';
-        expect(pipes\includeIfExists($filename, $context))->to_be_true();
+        expect(pipes\php($filename, $context))->to_be_true();
         expect(ob_get_clean())->to_be("int(1337)\n");
     });
 });
