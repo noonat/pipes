@@ -17,8 +17,8 @@ The string returned by the function `echo`-ed as the response. You can also just
 
 `pipes\get()` matches the GET HTTP method. You can also use `pipes\post()`,
 `pipes\put()`, and `pipes\delete()`. To specify a route that matches any HTTP
-methods, use `pipes\route()`. The first matching route is used, in the order
-that the routes were defined.
+methods, use `pipes\any()`. The first matching route is used, in the order that
+the routes were defined.
 
 ## Named path parameters
 
@@ -38,6 +38,31 @@ unnamed captures will be copied into `$params->captures`:
         list($year, $month, $day) = $params->captures;
         return "Archive for {$year}-{$month}-{$day}";
     });
+
+## Rendering views
+
+Use `pipes\render()` to include a PHP file as a view, and capture the output:
+
+    pipes\get('/', function() {
+        return pipes\render('index.php');
+    });
+
+Rendered templates are passed three variables by default (`$response`,
+`$request`, and `$route`). You can pass extra locals via the second parameter
+to `render()`:
+
+    return pipes\render('index.php', array(
+        'foo' => 'bar' // $foo will be available to the view
+    ));
+
+The `render()` method looks for the files in a `views` folder next to the
+`pipes.php` file by default, but you can override that by passing an option to
+`pipes\run()`:
+
+    pipes\run(array(
+        // store views in a templates folder instead
+        'views' => __DIR__.'/templates'
+    ));
 
 ## More to come...
 

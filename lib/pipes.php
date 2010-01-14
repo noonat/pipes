@@ -51,7 +51,7 @@ function render($template, $locals=array()) {
         'route' => route(),
     ));
     $context->merge($locals);
-    $views = options()->get('views', './views');
+    $views = options()->get('views', __DIR__.'/views');
     $filename = realpath("{$views}/{$template}");
     ob_start();
     $included = php($filename, $context);
