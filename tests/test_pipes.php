@@ -1,6 +1,6 @@
 <?php
 
-describe("dispatch", function() {
+describe("run", function() {
     before_each(function($context) {
         $oldServer = $_SERVER;
         $oldRequest = $_REQUEST;
@@ -19,7 +19,7 @@ describe("dispatch", function() {
         $_REQUEST = $context['oldRequest'];
     });
     
-    it("should dispatch and return the first matching route", function() {
+    it("should run and return the first matching route", function() {
         $route1 = pipes\get('/foo', function() {
             return 'bar';
         });
@@ -27,13 +27,13 @@ describe("dispatch", function() {
             return 'baz';
         });
         ob_start();
-        expect(pipes\dispatch())->to_be_type('object')->and_to_be($route1);
+        expect(pipes\run())->to_be_type('object')->and_to_be($route1);
         expect(ob_get_clean())->to_be('bar');
     });
     
     it("should return null if no route matched the request", function() {
         ob_start();
-        expect(pipes\dispatch())->to_be_null();
+        expect(pipes\run())->to_be_null();
         expect(ob_get_clean())->to_be('');
     });
     
@@ -42,11 +42,22 @@ describe("dispatch", function() {
             return 'bar';
         });
         ob_start();
-        expect(pipes\dispatch(array('flush'=>false)));
+        pipes\run(array('flush'=>false));
         expect(ob_get_clean())->to_be('');
         ob_start();
         pipes\response()->flush();
         expect(ob_get_clean())->to_be('bar');
+    });
+    
+    it("should use the 'path' sub-pattern, if matched", function() {
+        $_SERVER['REQUEST_URI'] = '/toe/foo';
+        $request = pipes\request(new pipes\Request());
+        pipes\get('/toe/(?<path>\w+)', array(
+            'paths' => array(__DIR__.'/mock/path1', __DIR__.'/mock/path2')
+        ));
+        ob_start();
+        pipes\run();
+        expect(ob_get_clean())->to_be('foo1foo2');
     });
 });
 

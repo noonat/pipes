@@ -59,9 +59,9 @@ describe("Request", function() {
         expect($request->params->b)->to_be(4);
     });
     
-    it("should set \$request->route to \$request->uri without the extension", function($context) {
+    it("should set \$request->path to \$request->uri without the extension", function($context) {
         extract($context);
-        expect($request->route)->to_be('/foo/bar/baz');
+        expect($request->path)->to_be('/foo/bar/baz');
     });
     
     it("should copy the lowercased extension to \$request->format", function($context) {
@@ -74,9 +74,9 @@ describe("Request", function() {
         expect($request->params->format)->to_be('biff');
     });
     
-    it("should have a default format of 'html' for routes without an extension", function($context) {
-        $route = new pipes\Request('/foo/bar');
-        expect($route->format)->to_be('html');
+    it("should have a default format of 'html' for requests without an extension", function($context) {
+        $request = new pipes\Request('/foo/bar');
+        expect($request->format)->to_be('html');
     });
     
     describe("ajax()", function() {

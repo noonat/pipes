@@ -81,16 +81,6 @@ describe("put()", function() {
     });
 });
 
-describe("trace()", function() {
-    it("should create a route for the TRACE method", function() {
-        pipes\routes(array());
-        $route = pipes\trace('/foo/bar', function() {}); 
-        expect($route)->to_be_a('pipes\Route');
-        expect($route->opts->method)->to_be('TRACE');
-        expect(pipes\routes())->to_be(array($route));
-    });
-});
-
 describe("Route", function() {
     it("should accept a pattern as the first parameter", function() {
         $route = new pipes\Route('/foo/:bar', function(){});
@@ -155,7 +145,7 @@ describe("Route", function() {
         });
     });
     
-    describe("dispatchToCallback()", function() {
+    describe("runCallback()", function() {
         it("should invoke the callback function with the arguments", function() {
             $count = 0;
             $args = array();
@@ -163,8 +153,8 @@ describe("Route", function() {
                 $count += 1;
                 $args[] = func_get_args();
             });
-            $route->dispatchToCallback(array(1, 2, 3));
-            $route->dispatchToCallback(array(4, 5, 6));
+            $route->runCallback(array(1, 2, 3));
+            $route->runCallback(array(4, 5, 6));
             expect($count)->to_be(2);
             expect($args)->to_have_length(2);
             expect($args[0])->to_be(array(1, 2, 3));
@@ -172,7 +162,7 @@ describe("Route", function() {
         });
     });
     
-    describe("dispatchToPaths()", function() {
+    describe("runPaths()", function() {
         before_each(function($context) {
             $context['route'] = new pipes\Route('/(?<path>.*)', array(
                 'paths' => array(__DIR__.'/mock/path1', __DIR__.'/mock/path2')
@@ -183,21 +173,21 @@ describe("Route", function() {
         it("should include matching files in the paths in order", function($context) {
             extract($context);
             ob_start();
-            expect($route->dispatchToPaths('/foo'))->to_be('foo1foo2');
+            expect($route->runPaths('/foo'))->to_be('foo1foo2');
             expect(ob_get_clean())->to_be('');
         });
         
         it("should stop iterating over the path if \$route->bubble is set to false", function($context) {
             extract($context);
             ob_start();
-            expect($route->dispatchToPaths('/bar'))->to_be('bar1');
+            expect($route->runPaths('/bar'))->to_be('bar1');
             expect(ob_get_clean())->to_be('');
         });
         
         it("should not fail if at least one matching file exists", function($context) {
             extract($context);
             ob_start();
-            expect($route->dispatchToPaths('/baz'))->to_be('baz1');
+            expect($route->runPaths('/baz'))->to_be('baz1');
             expect(ob_get_clean())->to_be('');
         });
         
@@ -205,45 +195,35 @@ describe("Route", function() {
             extract($context);
             ob_start();
             expect(function() use($route) {
-                $route->dispatchToPaths('/biff');
+                $route->runPaths('/biff');
             })->to_throw('Exception', 'no matching files in route paths');
             expect(ob_get_clean())->to_be('');
         });
     });
     
-    describe("dispatch()", function() {
-        it("should dispatch to callback if set", function() {
+    describe("run()", function() {
+        it("should run callback if set", function() {
             $route = new pipes\Route('/', function() { return 'huzzah!'; });
-            expect($route->dispatch('/', array()))->to_equal('huzzah!');
+            expect($route->run('/', array()))->to_equal('huzzah!');
         });
         
-        it("should dispatch to paths if set", function() {
+        it("should run paths if set", function() {
             $route = new pipes\Route('/foo', array(
                 'paths' => array(__DIR__.'/mock/path1', __DIR__.'/mock/path2')
             ));
             ob_start();
-            expect($route->dispatch('/foo', array()))->to_equal('foo1foo2');
+            expect($route->run('/foo', array()))->to_equal('foo1foo2');
             expect(ob_get_clean())->to_be('');
         });
         
-        it("should use the 'path' sub-pattern, if matched", function() {
-            $route = new pipes\Route('/toe/(?<path>\w+)', array(
-                'paths' => array(__DIR__.'/mock/path1', __DIR__.'/mock/path2')
-            ));
-            ob_start();
-            expect($route->dispatch('/toe/foo', array('path'=>'foo')))
-                ->to_equal('foo1foo2');
-            expect(ob_get_clean())->to_be('');
-        });
-        
-        it("should not dispatch to paths if callback is set ", function() {
+        it("should not run paths if callback is set ", function() {
             // FIXME: ... or should it?
             $route = new pipes\Route('/foo', array(
                 'callback' => function() { return 'xyzzy'; },
                 'paths' => array(__DIR__.'/mock/path1', __DIR__.'/mock/path2')
             ));
             ob_start();
-            expect($route->dispatch('/foo', array()))->to_equal('xyzzy');
+            expect($route->run('/foo', array()))->to_equal('xyzzy');
             expect(ob_get_clean())->to_be('');
         });
         
@@ -251,20 +231,19 @@ describe("Route", function() {
             $route = new pipes\Route('/', function(){});
             unset($route->opts->callback);
             expect(function() use($route) {
-                $route->dispatch('/', array());
+                $route->run('/', array());
             })->to_throw('Exception', 'paths or callback required for route');
         });
         
         it("should move all named matches into \$request->params", function() {
             $route = new pipes\Route('/', function(){ return 'xyzzy'; });
             $matches = array(
-                'path' => '/foo',
                 0 => 'x', 'a' => 'x',
                 1 => 'y', 'b' => 'y');
-            expect($route->dispatch('/foo', $matches))->to_equal('xyzzy');
+            expect($route->run('/foo', $matches))->to_equal('xyzzy');
             expect(pipes\request()->params->toArray())->to_be(array(
                 'format' => 'html',
-                'path' => 'foo',
+                'captures' => array(0 => 'y'),
                 'a' => 'x',
                 'b' => 'y'
             ));
