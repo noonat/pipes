@@ -47,7 +47,7 @@ Use `pipes\render()` to include a PHP file as a view, and capture the output:
         return pipes\render('index.php');
     });
 
-Rendered templates are passed three variables by default (`$response`,
+Rendered templates are passed four variables by default (`$params`, `$response`,
 `$request`, and `$route`). You can pass extra locals via the second parameter
 to `render()`:
 

@@ -50,6 +50,7 @@ function render($template, $locals=array()) {
         'request' => request(),
         'route' => route(),
     ));
+    $context->params = $context->request->params;
     $context->merge($locals);
     $views = options()->get('views', __DIR__.'/views');
     $filename = realpath("{$views}/{$template}");
@@ -223,7 +224,7 @@ class Route {
         }
         $request->params->captures = array_slice($matches, 1);
         if ($this->options->callback)
-            return $this->runCallback(array($request->params));
+            return $this->runCallback(array($request->params, $path));
         else if ($this->options->paths)
             return $this->runPaths($path);
         else
@@ -243,6 +244,7 @@ class Route {
             'request' => request(),
             'route' => $this
         ));
+        $context->params = $context->request->params;
         $included = false;
         $this->bubble = $this->options->get('bubble', true);
         foreach ($this->options->paths as $path) {
