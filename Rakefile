@@ -20,9 +20,9 @@ file destination => sources do |task|
     end
 end
 
-task :default => [:clean, :build]
+task :default => [:build]
 
-task :build => destination
+task :build => [:clean, destination]
 
 task :test do
     chdir 'tests' do

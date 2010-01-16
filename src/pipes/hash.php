@@ -2,6 +2,7 @@
 
 namespace pipes;
 
+/// Extended array that tries to pretend it's a Ruby hash.
 class Hash extends \ArrayObject {
     function __construct($values=array()) {
         parent::__construct($values, \ArrayObject::ARRAY_AS_PROPS);
