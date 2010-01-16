@@ -1,24 +1,23 @@
-require 'rake/clean'
-CLEAN.include('lib/')
-CLOBBER.include('lib/')
-
 sources = %w(helpers route request response hash)
 sources.map! { |source| "src/pipes/#{source}.php" }
 sources.each { |source| file source }
-destination = 'lib/pipes.php'
+destination = 'pipes.php'
 file destination => sources do |task|
-    mkdir 'lib'
-    puts 'creating lib/pipes.php'
+    puts 'creating pipes.php:'
     open(task.name, 'w') do |f|
         header = "<?php\n\nnamespace pipes;\n\n"
         header_regex = Regexp.new('^' + Regexp.escape(header))
         f.write header
         task.prerequisites.each do |source|
-            puts "... merging #{source}\n"
+            puts "- merging #{source}\n"
             f.write open(source).read().gsub(header_regex, '').strip() + "\n\n"
         end
     end
 end
+
+require 'rake/clean'
+CLEAN.include destination
+CLOBBER.include destination
 
 task :default => [:build]
 
