@@ -1,7 +1,8 @@
 <?php
 
-// Instead of including this file, you should run `rake build` from the root
-// folder, to build a concatenated version of all these files.
+// lib/pipes.php is a concatenated version of all of these files. You should
+// include that file instead of this one. Use rake to build a new copy of the
+// merged file from these files.
 
 require __DIR__.'/pipes/hash.php';
 require __DIR__.'/pipes/helpers.php';
