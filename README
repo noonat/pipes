@@ -18,8 +18,7 @@ namespaces and anonymous functions to give you code that looks like:
     });
 
 For documentation, see:
-http://wiki.github.com/noonat/pipes/.
+http://wiki.github.com/noonat/pipes/
 
 For bugs, feature requests, and so on:
 http://github.com/noonat/pipes/issues
-
