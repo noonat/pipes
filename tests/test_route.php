@@ -1,5 +1,13 @@
 <?php
 
+describe("halt()", function() {
+    it("should throw a HaltException", function() {
+        expect(function() {
+            pipes\halt();
+        })->to_throw('pipes\HaltException');
+    });
+});
+
 describe("routes()", function() {
     it("should return the array of routes", function() {
         $routes = pipes\routes();
@@ -247,6 +255,15 @@ describe("Route", function() {
                 'a' => 'x',
                 'b' => 'y'
             ));
+        });
+        
+        it("should catch a HaltException", function() {
+            $route = new pipes\Route('/', function() {
+                pipes\halt();
+            });
+            expect(function() use($route) {
+                $route->run('/', array());
+            })->not_to_throw('Exception');
         });
     });
     

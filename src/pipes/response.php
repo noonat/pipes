@@ -2,6 +2,13 @@
 
 namespace pipes;
 
+function redirect($url, $status=302) {
+    $response = response();
+    $response->status = $status;
+    $response->headers['Location'] = $url;
+    halt();
+}
+
 /// Return the current Response object
 function response($newResponse=null) {
     static $response;
@@ -15,11 +22,14 @@ class Response {
     function __construct() {
         $this->body = array();
         $this->headers = new Hash();
+        $this->status = null;
         $this->length = 0;
     }
     
     /// Send the headers, then echo the body.
     function flush() {
+        if (!is_null($this->status))
+            header('.', true, $this->status);
         foreach ($this->headers as $key => $value)
             header("$key: $value");
         echo implode("", $this->body);

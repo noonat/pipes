@@ -2,6 +2,12 @@
 
 namespace pipes;
 
+class HaltException extends \Exception {};
+
+function halt() {
+    throw new HaltException();
+}
+
 /// Return the route that matches the current request
 function route($newRoute=null) {
     static $route;
@@ -95,13 +101,17 @@ class Route {
                 unset($matches[$key]);
             }
         }
-        $request->params->captures = array_slice($matches, 1);
-        if ($this->options->callback)
-            return $this->runCallback(array($request->params, $path));
-        else if ($this->options->paths)
-            return $this->runPaths($path);
-        else
-            throw new \Exception('paths or callback required for route');
+        try {
+            $request->params->captures = array_slice($matches, 1);
+            if ($this->options->callback)
+                return $this->runCallback(array($request->params, $path));
+            else if ($this->options->paths)
+                return $this->runPaths($path);
+            else
+                throw new \Exception('paths or callback required for route');
+        } catch (HaltException $err) {
+            // pass
+        }
     }
     
     function runCallback($args) {

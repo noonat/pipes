@@ -60,6 +60,12 @@ function run($options=array()) {
     return null;
 }
 
+class HaltException extends \Exception {};
+
+function halt() {
+    throw new HaltException();
+}
+
 /// Return the route that matches the current request
 function route($newRoute=null) {
     static $route;
@@ -153,13 +159,17 @@ class Route {
                 unset($matches[$key]);
             }
         }
-        $request->params->captures = array_slice($matches, 1);
-        if ($this->options->callback)
-            return $this->runCallback(array($request->params, $path));
-        else if ($this->options->paths)
-            return $this->runPaths($path);
-        else
-            throw new \Exception('paths or callback required for route');
+        try {
+            $request->params->captures = array_slice($matches, 1);
+            if ($this->options->callback)
+                return $this->runCallback(array($request->params, $path));
+            else if ($this->options->paths)
+                return $this->runPaths($path);
+            else
+                throw new \Exception('paths or callback required for route');
+        } catch (HaltException $err) {
+            // pass
+        }
     }
     
     function runCallback($args) {
@@ -237,6 +247,13 @@ class Request {
     }
 }
 
+function redirect($url, $status=302) {
+    $response = response();
+    $response->status = $status;
+    $response->headers['Location'] = $url;
+    halt();
+}
+
 /// Return the current Response object
 function response($newResponse=null) {
     static $response;
@@ -250,11 +267,14 @@ class Response {
     function __construct() {
         $this->body = array();
         $this->headers = new Hash();
+        $this->status = null;
         $this->length = 0;
     }
     
     /// Send the headers, then echo the body.
     function flush() {
+        if (!is_null($this->status))
+            header('.', true, $this->status);
         foreach ($this->headers as $key => $value)
             header("$key: $value");
         echo implode("", $this->body);
