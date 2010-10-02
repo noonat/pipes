@@ -2,13 +2,6 @@
 
 namespace pipes;
 
-function redirect($url, $status=302) {
-    $response = response();
-    $response->status = $status;
-    $response->headers['Location'] = $url;
-    halt();
-}
-
 /// Return the current Response object
 function response($newResponse=null) {
     static $response;

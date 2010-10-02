@@ -8,6 +8,28 @@ describe("halt()", function() {
     });
 });
 
+describe("redirect()", function() {
+    after_each(function() {
+        pipes\response(new pipes\Response());
+    });
+    
+    it("should add a 302 status and location to the response", function() {
+        expect(function() {
+            pipes\redirect('/foo');
+        })->to_throw('pipes\HaltException');
+        expect(pipes\response()->status)->to_be(302);
+        expect(pipes\response()->headers['Location'])->to_Be('/foo');
+    });
+    
+    it("should allow you to override the status", function() {
+        expect(function() {
+            pipes\redirect('/foo', 304);
+        })->to_throw('pipes\HaltException');
+        expect(pipes\response()->status)->to_be(304);
+        expect(pipes\response()->headers['Location'])->to_Be('/foo');
+    });
+});
+
 describe("routes()", function() {
     it("should return the array of routes", function() {
         $routes = pipes\routes();

@@ -60,10 +60,44 @@ function run($options=array()) {
     return null;
 }
 
-class HaltException extends \Exception {};
-
+// Kills the current route and returns the response immediately. It can
+// optionally be passed a parameter to use as the response.
+//
+// pipes\halt();
+// pipes\halt(404);             // replaces the status of the response
+// pipes\halt('OHNOES!');       // replaces the body of the response
+// pipes\halt(404, 'OHNOES!');  // replaces both the status and the body
 function halt() {
-    throw new HaltException();
+    $args = func_get_args();
+    throw new HaltException($args);
+}
+
+// This is thrown by halt() to break out to the route handler.
+class HaltException extends \Exception {
+    function __construct($args=null) {
+        if (!empty($args)) {
+            $response = response();
+            if (is_int($args)) {
+                $response->status = $args;
+            } else if (is_array($args)) {
+                $response->status = $args[0];
+                $response->length = strlen($args[1]);
+                $response->body = array($args[1]);
+            } else if (is_string($args)) {
+                $response->body = array($args[1]);
+            } else if ($value instanceof Response) {
+                response($args);
+            }
+        }
+    }
+}
+
+// Sets the appropriate headers to redirect the user, then halts the request.
+function redirect($url, $status=302) {
+    $response = response();
+    $response->status = $status;
+    $response->headers['Location'] = $url;
+    halt();
 }
 
 /// Return the route that matches the current request
@@ -245,13 +279,6 @@ class Request {
         return isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
                $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest';
     }
-}
-
-function redirect($url, $status=302) {
-    $response = response();
-    $response->status = $status;
-    $response->headers['Location'] = $url;
-    halt();
 }
 
 /// Return the current Response object
