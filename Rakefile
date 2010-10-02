@@ -1,8 +1,9 @@
+require 'rake/clean'
+
 sources = %w(helpers route request response hash)
 sources.map! { |source| "src/pipes/#{source}.php" }
 sources.each { |source| file source }
-destination = 'pipes.php'
-file destination => sources do |task|
+file 'pipes.php' => sources do |task|
     puts 'creating pipes.php:'
     open(task.name, 'w') do |f|
         header = "<?php\n\nnamespace pipes;\n\n"
@@ -14,14 +15,21 @@ file destination => sources do |task|
         end
     end
 end
+CLEAN << 'pipes.php'
+CLOBBER << 'pipes.php'
 
-require 'rake/clean'
-CLEAN.include destination
-CLOBBER.include destination
+file 'docs/api.md'
+file 'docs/api.html' => 'docs/api.md' do
+    cd 'docs' do
+        sh 'ronn', '-5', '-s', 'toc', 'api.md'
+    end
+end
+CLEAN << 'docs/api.html'
+CLOBBER << 'docs/api.html'
 
 task :default => [:build]
 
-task :build => [:clean, destination]
+task :build => [:clean, 'pipes.php', 'docs/api.html']
 
 task :test do
     chdir 'tests' do
