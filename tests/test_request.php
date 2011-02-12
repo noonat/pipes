@@ -59,6 +59,26 @@ describe("Request", function() {
         expect($request->params->b)->to_be(4);
     });
     
+    it("should strip basePath option from \$request->uri", function($context) {
+        pipes\options()->basePath = '/foo';
+        $request = new pipes\Request();
+        pipes\options()->delete('basePath');
+        expect($request->uri)->to_be('/bar/baz.biff');
+        expect($request->method)->to_be('PUT');
+        expect($request->params->a)->to_be(1);
+        expect($request->params->b)->to_be(2);
+    });
+    
+    it("should not strip basePath from \$request->uri if they don't match", function($context) {
+      pipes\options()->basePath = '/ohai';
+      $request = new pipes\Request();
+      pipes\options()->delete('basePath');
+      expect($request->uri)->to_be('/foo/bar/baz.biff');
+      expect($request->method)->to_be('PUT');
+      expect($request->params->a)->to_be(1);
+      expect($request->params->b)->to_be(2);
+    });
+    
     it("should set \$request->path to \$request->uri without the extension", function($context) {
         extract($context);
         expect($request->path)->to_be('/foo/bar/baz');

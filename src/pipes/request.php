@@ -23,6 +23,11 @@ class Request {
         $this->params = new Hash();
         $this->params->merge($params ?: $_REQUEST);
         
+        // strip basePath from uri, if it is set and matches
+        $basePath = rtrim(options()->get('basePath', ''), '/');
+        if ($basePath && strpos($this->uri, $basePath) === 0)
+            $this->uri = substr($this->uri, strlen($basePath)) ?: '/';
+        
         // split the uri into route and format
         $info = pathinfo($this->uri);
         $this->path = rtrim($info['dirname'], '/').'/'.$info['filename'];
