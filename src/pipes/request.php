@@ -18,13 +18,18 @@ class Request {
         
         // set uri, method, and params from $_SERVER and $_REQUEST
         $this->uri = $uri ?: $this->server->get('REQUEST_URI', '/');
-        $this->method = $method ?: $this->server->get('REQUEST_METHOD', 'GET');
-        $this->method = strtoupper($this->method);
         $this->params = new Hash();
         $this->params->merge($params ?: $_REQUEST);
+        $this->method = $method ?: $this->server->get('REQUEST_METHOD', 'GET');
+        $this->method = strtoupper($this->method);
+        if ($this->method === 'POST' && options()->get('requestMethodOverride', true)) {
+            $method = strtoupper($this->params->get('_method', ''));
+            if (in_array($method, array('DELETE', 'GET', 'PUT', 'POST')))
+                $this->method = $method;
+        }
         
         // strip basePath from uri, if it is set and matches
-        $basePath = rtrim(options()->get('basePath', ''), '/');
+        $basePath = rtrim(options()->get('requestBasePath', ''), '/');
         if ($basePath && strpos($this->uri, $basePath) === 0)
             $this->uri = substr($this->uri, strlen($basePath)) ?: '/';
         

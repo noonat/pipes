@@ -50,6 +50,29 @@ describe("Request", function() {
         expect($request->params->b)->to_be(2);
     });
     
+    it("should allow \$request->params->_method to override real method", function($context) {
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_REQUEST['_method'] = 'PUT';
+        $request = new pipes\Request();
+        expect($request->method)->to_be('PUT');
+    });
+    
+    it("should not allow _method to override with an invalid method", function($context) {
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_REQUEST['_method'] = 'MOAR POWAH';
+        $request = new pipes\Request();
+        expect($request->method)->to_be('POST');
+    });
+    
+    it("should not allow _method to override if requestMethodOverride option is false", function($context) {
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_REQUEST['_method'] = 'PUT';
+        pipes\options()->requestMethodOverride = false;
+        $request = new pipes\Request();
+        pipes\options()->delete('requestMethodOverride');
+        expect($request->method)->to_be('POST');
+    });
+    
     it("should allow you to override \$_SERVER and \$_REQUEST by passing values " .
        "to the constructor instead", function($context) {
         $request = new pipes\Request('/i/have/the/power', 'GET', array('a'=>3, 'b'=>4));
@@ -59,24 +82,24 @@ describe("Request", function() {
         expect($request->params->b)->to_be(4);
     });
     
-    it("should strip basePath option from \$request->uri", function($context) {
-        pipes\options()->basePath = '/foo';
+    it("should strip requestBasePath option from \$request->uri", function($context) {
+        pipes\options()->requestBasePath = '/foo';
         $request = new pipes\Request();
-        pipes\options()->delete('basePath');
+        pipes\options()->delete('requestBasePath');
         expect($request->uri)->to_be('/bar/baz.biff');
         expect($request->method)->to_be('PUT');
         expect($request->params->a)->to_be(1);
         expect($request->params->b)->to_be(2);
     });
     
-    it("should not strip basePath from \$request->uri if they don't match", function($context) {
-      pipes\options()->basePath = '/ohai';
-      $request = new pipes\Request();
-      pipes\options()->delete('basePath');
-      expect($request->uri)->to_be('/foo/bar/baz.biff');
-      expect($request->method)->to_be('PUT');
-      expect($request->params->a)->to_be(1);
-      expect($request->params->b)->to_be(2);
+    it("should not strip requestBasePath from \$request->uri if they don't match", function($context) {
+        pipes\options()->requestBasePath = '/ohai';
+        $request = new pipes\Request();
+        pipes\options()->delete('requestBasePath');
+        expect($request->uri)->to_be('/foo/bar/baz.biff');
+        expect($request->method)->to_be('PUT');
+        expect($request->params->a)->to_be(1);
+        expect($request->params->b)->to_be(2);
     });
     
     it("should set \$request->path to \$request->uri without the extension", function($context) {
