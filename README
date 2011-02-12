@@ -13,9 +13,20 @@
 pipes is a micro-framework for PHP 5.3, inspired by Sinatra. It uses
 namespaces and anonymous functions to give you code that looks like:
 
+    require 'pipes.php';
+    
     pipes\get('/hi', function() {
-        return 'Hello, world!';
+        return "Hello, world!";
     });
+    
+    pipes\get('/hi/:name', function($params) {
+        return "Hello, {$params->name}!";
+    });
+    
+    pipes\run();
+
+To use, just download and include the merged file:
+https://github.com/noonat/pipes/raw/master/pipes.php
 
 For documentation, see:
 http://wiki.github.com/noonat/pipes/
